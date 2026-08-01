@@ -6,7 +6,7 @@
 // las páginas preguntan `canWrite` para esconder o deshabilitar acciones. Un
 // VIEWER navega igual, pero sin botones de escritura.
 
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { apiGet } from "@/lib/api";
@@ -36,10 +36,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     staleTime: 5 * 60 * 1000,
   });
 
-  if (isError) {
-    // La cookie ya no vale: fuera del panel.
-    if (typeof window !== "undefined") router.replace("/login");
-  }
+  // La cookie ya no vale: fuera del panel. Va en un efecto porque navegar
+  // durante el render rompe el árbol de React.
+  useEffect(() => {
+    if (isError) router.replace("/login");
+  }, [isError, router]);
 
   const operator = data?.operator ?? null;
 

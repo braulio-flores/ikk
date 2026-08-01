@@ -11,6 +11,7 @@ import { Search, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { fileStamp } from "@/lib/datetime";
+import { apiErrorMessage } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
 export interface Column<T> {
@@ -147,9 +148,15 @@ export function DataTable<T>({
       {isLoading ? (
         <TableSkeleton columns={columns.length} />
       ) : error ? (
-        <p className="px-4 py-8 text-center text-sm text-[var(--ikk-danger)]">
-          {errorMessage}
-        </p>
+        <div className="px-4 py-10 text-center">
+          <p className="text-sm text-[var(--ikk-danger)]">
+            {apiErrorMessage(error, errorMessage)}
+          </p>
+          <p className="mt-1 text-[13px] text-[var(--ikk-fg-muted)]">
+            No se muestra información parcial: revisa el estado del producto en
+            Configuración → Productos.
+          </p>
+        </div>
       ) : rows.length === 0 ? (
         <p className="px-4 py-10 text-center text-sm text-[var(--ikk-fg-muted)]">
           {emptyMessage}
