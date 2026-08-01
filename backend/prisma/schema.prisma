@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OperatorRole {
+  SUPER_ADMIN
+  ADMIN
+  VIEWER
+}
+
+enum Product {
+  TICKOMIUM
+  FORMATE
+  MDOC
+  IKK
+}
+
+model Operator {
+  id           String       @id @default(cuid())
+  name         String
+  email        String       @unique
+  passwordHash String
+  role         OperatorRole @default(ADMIN)
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  refreshTokens       RefreshToken[]
+  auditLogs           AuditLog[]
+  passwordResetTokens PasswordResetToken[]
+}
+
+model RefreshToken {
+  id         String    @id @default(cuid())
+  tokenHash  String
+  operatorId String
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  operator Operator @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+
+  @@index([operatorId])
+}
+
+model PasswordResetToken {
+  id         String   @id @default(cuid())
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  used       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  operatorId String
+
+  operator Operator @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+
+  @@index([operatorId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  operatorId String?
+  product    Product
+  action     String
+  targetId   String?
+  payload    Json
+  createdAt  DateTime @default(now())
+
+  operator Operator? @relation(fields: [operatorId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([operatorId])
+}
+
+enum LeadStatus {
+  NEW
+  IN_PROGRESS
+  WON
+  ARCHIVED
+}
+
+/// Contactos que llegan del formulario público de la landing. Son datos
+/// propios de IKK (no de un producto hijo): se guardan acá para que ningún
+/// prospecto se pierda si falla el envío de email.
+model ContactLead {
+  id        String     @id @default(cuid())
+  name      String
+  email     String
+  company   String?
+  phone     String?
+  message   String
+  status    LeadStatus @default(NEW)
+  notes     String?
+  source    String     @default("landing")
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ProductCredential {
+  product                      Product  @id
+  baseUrl                      String
+  serviceAccountTokenEncrypted String
+  updatedAt                    DateTime @updatedAt
+}

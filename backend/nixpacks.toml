@@ -1,0 +1,18 @@
+# Configuración de Nixpacks para Railway.
+# En Railway, el "Root Directory" del servicio debe ser /backend.
+#
+# El build corre `prisma generate && tsc` y, al terminar, npm dispara el script
+# `postbuild` (`prisma migrate deploy`), que crea las tablas en Neon antes de
+# que el contenedor arranque.
+
+[phases.setup]
+nixPkgs = ["nodejs_20", "openssl"]
+
+[phases.install]
+cmds = ["npm ci || npm install"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "npm start"

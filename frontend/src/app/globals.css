@@ -1,0 +1,131 @@
+@import "tailwindcss";
+@import "../styles/ikk-tokens.css";
+
+/* ---------------------------------------------------------------------------
+ * Tailwind v4 inline theme — maps Tailwind color tokens (used by shadcn-style
+ * components via bg-background, text-foreground, border-border, etc.) to the
+ * IKK design tokens. Keeping shadcn's variable names lets us drop in any
+ * shadcn primitive unmodified.
+ * ------------------------------------------------------------------------ */
+@theme inline {
+  --color-background: var(--ikk-bg);
+  --color-foreground: var(--ikk-fg);
+
+  --color-card: var(--ikk-bg-card);
+  --color-card-foreground: var(--ikk-fg);
+
+  --color-popover: var(--ikk-bg-card);
+  --color-popover-foreground: var(--ikk-fg);
+
+  --color-primary: var(--ikk-accent);
+  --color-primary-foreground: var(--ikk-accent-fg);
+
+  --color-secondary: var(--ikk-bg-card);
+  --color-secondary-foreground: var(--ikk-fg);
+
+  --color-muted: var(--ikk-bg-elev);
+  --color-muted-foreground: var(--ikk-fg-muted);
+
+  --color-accent: var(--ikk-bg-hover);
+  --color-accent-foreground: var(--ikk-fg);
+
+  --color-destructive: var(--ikk-danger);
+  --color-destructive-foreground: var(--ikk-fg);
+
+  --color-success: var(--ikk-success);
+  --color-warn: var(--ikk-warn);
+  --color-info: var(--ikk-info);
+
+  --color-border: var(--ikk-line);
+  --color-border-soft: var(--ikk-line-soft);
+  --color-input: var(--ikk-line);
+  --color-ring: var(--ikk-accent);
+
+  --color-ikk-bg: var(--ikk-bg);
+  --color-ikk-bg-elev: var(--ikk-bg-elev);
+  --color-ikk-bg-card: var(--ikk-bg-card);
+  --color-ikk-bg-hover: var(--ikk-bg-hover);
+  --color-ikk-line: var(--ikk-line);
+  --color-ikk-line-soft: var(--ikk-line-soft);
+  --color-ikk-fg: var(--ikk-fg);
+  --color-ikk-fg-muted: var(--ikk-fg-muted);
+  --color-ikk-fg-dim: var(--ikk-fg-dim);
+  --color-ikk-accent: var(--ikk-accent);
+  --color-ikk-accent-hover: var(--ikk-accent-hover);
+  --color-ikk-accent-soft: var(--ikk-accent-soft);
+  --color-ikk-success: var(--ikk-success);
+  --color-ikk-warn: var(--ikk-warn);
+  --color-ikk-danger: var(--ikk-danger);
+  --color-ikk-info: var(--ikk-info);
+
+  --font-sans: var(--ikk-font-sans);
+  --font-mono: var(--ikk-font-mono);
+
+  --radius-xs: var(--ikk-r-xs);
+  --radius-sm: var(--ikk-r-sm);
+  --radius-md: var(--ikk-r-md);
+  --radius-lg: var(--ikk-r-lg);
+  --radius-xl: var(--ikk-r-xl);
+  --radius-2xl: var(--ikk-r-2xl);
+}
+
+@layer base {
+  * {
+    border-color: var(--ikk-line);
+  }
+  html, body {
+    background: var(--ikk-bg);
+    color: var(--ikk-fg);
+    font-family: var(--ikk-font-sans);
+    font-feature-settings: 'ss01', 'cv11';
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background: var(--ikk-accent-soft);
+    color: var(--ikk-fg);
+  }
+}
+
+@layer components {
+  /* Mono badges (-- ACTIVO style). Color is inherited from the variant class. */
+  .ikk-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: var(--ikk-font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: transparent;
+    white-space: nowrap;
+  }
+  .ikk-badge::before {
+    content: '';
+    width: 6px;
+    height: 1px;
+    background: currentColor;
+  }
+  .ikk-badge--active   { color: var(--ikk-success); }
+  .ikk-badge--trial    { color: var(--ikk-info);    }
+  .ikk-badge--suspend  { color: var(--ikk-warn);    }
+  .ikk-badge--overdue  { color: var(--ikk-danger);  }
+  .ikk-badge--neutral  { color: var(--ikk-fg-muted);}
+
+  .ikk-kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    font-family: var(--ikk-font-mono);
+    font-size: 11px;
+    color: var(--ikk-fg-muted);
+    background: var(--ikk-bg-elev);
+    border: 1px solid var(--ikk-line);
+    border-radius: 4px;
+  }
+}

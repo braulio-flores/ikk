@@ -1,0 +1,105 @@
+/* IKK Solutions — Design Tokens
+ * --------------------------------------------------------------------------
+ * Surfaces are token-driven, so themes flip in one place. The dark theme is
+ * the primary; .ikk-light reskins anything wrapped with it (used for the
+ * landing-light variant and the optional panel-light demo).
+ *
+ * All accent hues share chroma 0.18 / lightness 0.58 in oklch, so swapping
+ * the hue (cobalt -> violet -> lime) preserves visual weight.
+ */
+
+:root {
+  /* Cobalt by default. */
+  --ikk-accent-h: 260;
+  --ikk-accent-c: 0.18;
+  --ikk-accent-l: 0.58;
+
+  --ikk-accent: oklch(var(--ikk-accent-l) var(--ikk-accent-c) var(--ikk-accent-h));
+  --ikk-accent-hover: oklch(calc(var(--ikk-accent-l) + 0.06) var(--ikk-accent-c) var(--ikk-accent-h));
+  --ikk-accent-soft: oklch(var(--ikk-accent-l) var(--ikk-accent-c) var(--ikk-accent-h) / 0.14);
+  --ikk-accent-fg: oklch(0.98 0 0);
+
+  /* Neutrals — graphite scale, very low chroma cool-warm balance. */
+  --ikk-bg:        oklch(0.16 0.005 260);
+  --ikk-bg-elev:   oklch(0.19 0.005 260);
+  --ikk-bg-card:   oklch(0.21 0.005 260);
+  --ikk-bg-hover:  oklch(0.24 0.005 260);
+  --ikk-line:      oklch(0.28 0.005 260);
+  --ikk-line-soft: oklch(0.23 0.005 260);
+  --ikk-fg:        oklch(0.98 0 0);
+  --ikk-fg-muted:  oklch(0.72 0.005 260);
+  --ikk-fg-dim:    oklch(0.52 0.005 260);
+
+  /* Semantic */
+  --ikk-success: oklch(0.72 0.16 150);
+  --ikk-warn:    oklch(0.78 0.16 75);
+  --ikk-danger:  oklch(0.65 0.20 25);
+  --ikk-info:    oklch(0.70 0.14 240);
+
+  /* Type */
+  --ikk-font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --ikk-font-mono: var(--font-geist-mono), ui-monospace, 'JetBrains Mono', 'SF Mono', monospace;
+
+  /* Radii */
+  --ikk-r-xs: 4px;
+  --ikk-r-sm: 6px;
+  --ikk-r-md: 8px;
+  --ikk-r-lg: 12px;
+  --ikk-r-xl: 16px;
+  --ikk-r-2xl: 24px;
+
+  /* Shadows */
+  --ikk-shadow-sm: 0 1px 2px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.04);
+  --ikk-shadow-md: 0 4px 12px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.05);
+  --ikk-shadow-lg: 0 16px 48px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.06);
+
+  /* Spacing scale (4px base) */
+  --ikk-s-1: 4px;
+  --ikk-s-2: 8px;
+  --ikk-s-3: 12px;
+  --ikk-s-4: 16px;
+  --ikk-s-5: 20px;
+  --ikk-s-6: 24px;
+  --ikk-s-8: 32px;
+  --ikk-s-10: 40px;
+  --ikk-s-12: 48px;
+  --ikk-s-16: 64px;
+  --ikk-s-20: 80px;
+}
+
+.ikk-light {
+  --ikk-bg:        oklch(0.99 0 0);
+  --ikk-bg-elev:   oklch(0.97 0.003 260);
+  --ikk-bg-card:   oklch(1.00 0 0);
+  --ikk-bg-hover:  oklch(0.95 0.003 260);
+  --ikk-line:      oklch(0.90 0.005 260);
+  --ikk-line-soft: oklch(0.94 0.005 260);
+  --ikk-fg:        oklch(0.18 0.005 260);
+  --ikk-fg-muted:  oklch(0.42 0.005 260);
+  --ikk-fg-dim:    oklch(0.62 0.005 260);
+  --ikk-accent-soft: oklch(var(--ikk-accent-l) var(--ikk-accent-c) var(--ikk-accent-h) / 0.10);
+
+  --ikk-shadow-sm: 0 1px 2px rgba(20,25,40,0.06), 0 0 0 1px rgba(20,25,40,0.05);
+  --ikk-shadow-md: 0 4px 16px rgba(20,25,40,0.08), 0 0 0 1px rgba(20,25,40,0.05);
+  --ikk-shadow-lg: 0 24px 60px rgba(20,25,40,0.12), 0 0 0 1px rgba(20,25,40,0.05);
+}
+
+/* Subtle grid background used by login + screens that want a "platform"
+   texture without going full developer-tools aesthetic. */
+.ikk-grid-bg {
+  background-image:
+    linear-gradient(var(--ikk-line-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--ikk-line-soft) 1px, transparent 1px);
+  background-size: 48px 48px;
+  background-position: -1px -1px;
+}
+
+.ikk-dot-bg {
+  background-image: radial-gradient(var(--ikk-line) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+@keyframes ikkspin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
