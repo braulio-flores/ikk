@@ -103,6 +103,39 @@ export const extendSubscription = async (
   res.json(data);
 };
 
+export const rejectCompanyRequest = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const id = requireParam(req, "id");
+  const { reason } = (req.body ?? {}) as { reason?: unknown };
+  if (reason !== undefined && typeof reason !== "string") {
+    throw new BadRequestError("El motivo debe ser texto");
+  }
+  const cleanReason = reason?.trim() ?? "";
+  if (cleanReason.length > 500) {
+    throw new BadRequestError("El motivo no puede pasar de 500 caracteres");
+  }
+
+  const data = await tickomiumClient.rejectCompanyRequest(id, {
+    reason: cleanReason || undefined,
+  });
+
+  await writeAudit({
+    operatorId: req.user?.id,
+    product: "TICKOMIUM",
+    action: "company.rejectRequest",
+    targetId: id,
+    payload: {
+      company: data.name,
+      requestedBy: data.requestedBy ? memberName(data.requestedBy) : "Sin solicitante",
+      reason: data.statusReason ?? "Sin motivo",
+    },
+  });
+
+  res.json(data);
+};
+
 export const addCompanyUser = async (
   req: Request,
   res: Response

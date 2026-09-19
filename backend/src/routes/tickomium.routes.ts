@@ -6,6 +6,7 @@ import {
   updateCompany,
   updateCompanyStatus,
   extendSubscription,
+  rejectCompanyRequest,
   addCompanyUser,
   removeCompanyUser,
   listUsers,
@@ -36,6 +37,7 @@ router.post("/companies", createCompany);
 router.patch("/companies/:id", updateCompany);
 router.patch("/companies/:id/status", updateCompanyStatus);
 router.patch("/companies/:id/extend-subscription", extendSubscription);
+router.post("/companies/:id/reject", rejectCompanyRequest);
 router.post("/companies/:id/users", addCompanyUser);
 router.delete("/companies/:id/users/:userId", removeCompanyUser);
 

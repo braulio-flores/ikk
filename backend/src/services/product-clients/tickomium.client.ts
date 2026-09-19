@@ -63,6 +63,18 @@ export class TickomiumClient extends BaseProductClient {
     });
   }
 
+  /**
+   * Rechaza una solicitud de alta. La empresa queda como "solicitud
+   * rechazada", sin miembros, y a quien la pidió le llega el motivo.
+   */
+  rejectCompanyRequest(id: string, body: { reason?: string }): Promise<RejectedCompany> {
+    return this.request<RejectedCompany>({
+      method: "POST",
+      path: `/management/companies/${id}/reject`,
+      body,
+    });
+  }
+
   /** Quita al usuario de la empresa; su cuenta se conserva. */
   removeCompanyUser(id: string, userId: string): Promise<RemoveCompanyUserResponse> {
     return this.request<RemoveCompanyUserResponse>({
@@ -205,6 +217,15 @@ export interface CompanyMember {
   companyRoleId: string | null;
   user: MemberUser;
   companyRole: { id: string; name: string } | null;
+}
+
+export interface RejectedCompany {
+  id: string;
+  name: string;
+  status: string;
+  statusReason: string | null;
+  requestClosedAt: string;
+  requestedBy: MemberUser | null;
 }
 
 export interface RemoveCompanyUserResponse {

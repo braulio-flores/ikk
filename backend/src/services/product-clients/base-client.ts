@@ -41,12 +41,24 @@ export class BaseProductClient {
       (error: AxiosError) => {
         const status = error.response?.status ?? 502;
         const data = error.response?.data as { message?: string; code?: string } | undefined;
-        const message =
-          data?.message ?? `Error comunicándose con el servicio ${this.productName}`;
+        const message = data?.message ?? this.fallbackMessage(error);
         const code = data?.code ?? "PRODUCT_CLIENT_ERROR";
         throw new HttpError(status, message, code);
       }
     );
+  }
+
+  /** Mensaje para cuando el producto no manda uno propio. */
+  private fallbackMessage(error: AxiosError): string {
+    if (!error.response) {
+      return `No pudimos conectar con ${this.productName}. Puede que esté fuera de línea.`;
+    }
+    // Express responde 404 sin cuerpo JSON cuando la ruta no existe: el panel
+    // ya usa una función que la versión publicada del producto aún no tiene.
+    if (error.response.status === 404) {
+      return `${this.productName} todavía no tiene esta función publicada. Actualiza su versión e inténtalo de nuevo.`;
+    }
+    return `Error comunicándose con el servicio ${this.productName}`;
   }
 
   protected async request<T>(opts: RequestOptions): Promise<T> {

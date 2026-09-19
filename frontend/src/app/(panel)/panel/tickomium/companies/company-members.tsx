@@ -18,7 +18,7 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useResourceMutation, type ListResponse } from "@/hooks/use-resource";
 import { apiGet } from "@/lib/api";
 import { apiErrorMessage } from "@/lib/errors";
-import { fullName, isCompanyAdmin } from "@/lib/labels";
+import { fullName, isClosedRequest, isCompanyAdmin } from "@/lib/labels";
 
 const COMPANIES_ENDPOINT = "/tickomium/companies";
 const USERS_ENDPOINT = "/tickomium/users";
@@ -59,7 +59,7 @@ export function CompanyMembers({
   company,
   onClose,
 }: {
-  company: { id: string; name: string };
+  company: { id: string; name: string; status?: string };
   onClose: () => void;
 }) {
   const { canWrite } = useSession();
@@ -129,7 +129,9 @@ export function CompanyMembers({
           </p>
         ) : members.length === 0 ? (
           <p className="py-8 text-center text-sm text-[var(--ikk-fg-muted)]">
-            Esta empresa todavía no tiene usuarios.
+            {isClosedRequest(company.status)
+              ? "La solicitud se cerró y nadie tiene acceso a esta empresa."
+              : "Esta empresa todavía no tiene usuarios."}
           </p>
         ) : (
           <ul className="divide-y divide-[var(--ikk-line-soft)] rounded-[var(--ikk-r-md)] border border-[var(--ikk-line-soft)]">

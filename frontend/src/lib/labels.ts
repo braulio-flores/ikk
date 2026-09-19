@@ -19,12 +19,37 @@ const COMPANY_STATUS: Record<string, { label: string; tone: BadgeTone }> = {
   INACTIVE: { label: "Inactiva", tone: "neutral" },
   EXPIRED: { label: "Vencida", tone: "overdue" },
   PENDING_DELETION: { label: "Baja solicitada", tone: "suspend" },
+  REJECTED: { label: "Solicitud rechazada", tone: "neutral" },
+  WITHDRAWN: { label: "Solicitud retirada", tone: "neutral" },
 };
 
-/** Estados que el operador puede asignar desde el panel. */
-export const COMPANY_STATUS_OPTIONS = Object.entries(COMPANY_STATUS).map(
+/**
+ * Solicitudes de alta ya cerradas. No se asignan con el cambio de estado: las
+ * produce el rechazo (desde el panel) o el retiro (quien la pidió), que además
+ * sacan a los miembros de la empresa.
+ */
+const CLOSED_REQUEST_STATUSES = new Set(["REJECTED", "WITHDRAWN"]);
+
+/** Solicitudes de alta que siguen esperando respuesta. */
+const AWAITING_APPROVAL_STATUSES = new Set(["PENDING_ACTIVATION", "DEMO_REQUESTED"]);
+
+/** Todos los estados, para filtrar el listado. */
+export const COMPANY_STATUS_FILTER_OPTIONS = Object.entries(COMPANY_STATUS).map(
   ([value, { label }]) => ({ value, label })
 );
+
+/** Estados que el operador puede asignar desde el panel. */
+export const COMPANY_STATUS_OPTIONS = COMPANY_STATUS_FILTER_OPTIONS.filter(
+  ({ value }) => !CLOSED_REQUEST_STATUSES.has(value)
+);
+
+export function isAwaitingApproval(status: unknown): boolean {
+  return AWAITING_APPROVAL_STATUSES.has(String(status ?? ""));
+}
+
+export function isClosedRequest(status: unknown): boolean {
+  return CLOSED_REQUEST_STATUSES.has(String(status ?? ""));
+}
 
 export function companyStatus(value: unknown): { label: string; tone: BadgeTone } {
   const key = String(value ?? "");
@@ -105,6 +130,7 @@ const AUDIT_ACTIONS: Record<string, string> = {
   "company.createUser": "Alta de usuario en empresa",
   "company.addUser": "Usuario agregado a empresa",
   "company.removeUser": "Usuario retirado de empresa",
+  "company.rejectRequest": "Solicitud de empresa rechazada",
   "user.create": "Alta de usuario",
   "user.update": "Edición de usuario",
   "user.delete": "Baja de usuario",

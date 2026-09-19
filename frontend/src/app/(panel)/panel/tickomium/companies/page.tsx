@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarPlus, CheckCircle2, Pencil, Plus, Shuffle, Users } from "lucide-react";
+import {
+  CalendarPlus,
+  CheckCircle2,
+  Pencil,
+  Plus,
+  Shuffle,
+  Users,
+  XCircle,
+} from "lucide-react";
 import { PageHeader } from "@/components/panel/page-header";
 import { DataTable, type Column } from "@/components/panel/data-table";
 import { Badge } from "@/components/ui/badge";
@@ -9,11 +17,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Field, Select } from "@/components/ui/field";
+import { Field, Select, Textarea } from "@/components/ui/field";
 import { useResourceList, useResourceMutation } from "@/hooks/use-resource";
 import { useSession } from "@/components/panel/session";
 import { formatDate, formatExpiry } from "@/lib/datetime";
-import { COMPANY_STATUS_OPTIONS, companyStatus } from "@/lib/labels";
+import {
+  COMPANY_STATUS_FILTER_OPTIONS,
+  COMPANY_STATUS_OPTIONS,
+  companyStatus,
+  fullName,
+  isAwaitingApproval,
+  isClosedRequest,
+} from "@/lib/labels";
 import { CompanyMembers } from "./company-members";
 
 interface Company {
@@ -28,6 +43,30 @@ interface Company {
   planExpiresAt?: string | null;
   createdAt: string;
   _count?: { companyUsers?: number };
+  /** Quien pidió el alta desde Tickomium; falta en empresas creadas desde el panel. */
+  requestedBy?: { firstName?: string | null; lastName?: string | null; email: string } | null;
+  /** Motivo del rechazo de la solicitud. */
+  statusReason?: string | null;
+  /** Cuándo se rechazó o retiró la solicitud. */
+  requestClosedAt?: string | null;
+}
+
+const REJECT_REASON_MAX = 500;
+
+/** Detalle de la solicitud de alta bajo el estado: quién, cuándo y por qué. */
+function requestDetail(company: Company): string | null {
+  const who = company.requestedBy ? fullName(company.requestedBy) : null;
+  const when = company.requestClosedAt ? formatDate(company.requestClosedAt) : null;
+
+  if (company.status === "REJECTED") {
+    const why = company.statusReason ? `Motivo: ${company.statusReason}` : "Sin motivo";
+    return [when, why].filter(Boolean).join(" · ");
+  }
+  if (company.status === "WITHDRAWN") {
+    return [who && `Retirada por ${who}`, when].filter(Boolean).join(" · ") || null;
+  }
+  if (isAwaitingApproval(company.status) && who) return `Solicitó ${who}`;
+  return null;
 }
 
 function membersLabel(company: Company): string {
@@ -46,6 +85,7 @@ export default function CompaniesPage() {
   const [extending, setExtending] = useState<Company | null>(null);
   const [validating, setValidating] = useState<Company | null>(null);
   const [viewingMembers, setViewingMembers] = useState<Company | null>(null);
+  const [rejecting, setRejecting] = useState<Company | null>(null);
 
   const list = useResourceList<Company>(ENDPOINT, {
     limit: 25,
@@ -79,9 +119,23 @@ export default function CompaniesPage() {
       label: "Estado",
       render: (row) => {
         const s = companyStatus(row.status);
-        return <Badge variant={s.tone}>{s.label}</Badge>;
+        const detail = requestDetail(row);
+        return (
+          <div className="min-w-0 max-w-[260px]">
+            <Badge variant={s.tone}>{s.label}</Badge>
+            {detail && (
+              <div
+                className="mt-1 line-clamp-2 text-[11px] text-[var(--ikk-fg-dim)]"
+                title={detail}
+              >
+                {detail}
+              </div>
+            )}
+          </div>
+        );
       },
-      csv: (row) => companyStatus(row.status).label,
+      csv: (row) =>
+        [companyStatus(row.status).label, requestDetail(row)].filter(Boolean).join(" — "),
     },
     {
       key: "plan",
@@ -166,7 +220,7 @@ export default function CompaniesPage() {
             value={status}
             onChange={(e) => setStatus(e.target.value)}
             placeholder="Todos los estados"
-            options={COMPANY_STATUS_OPTIONS}
+            options={COMPANY_STATUS_FILTER_OPTIONS}
           />
         }
         page={list.page}
@@ -202,22 +256,37 @@ export default function CompaniesPage() {
                 >
                   <Shuffle className="h-4 w-4" />
                 </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  title="Extender suscripción"
-                  onClick={() => setExtending(row)}
-                >
-                  <CalendarPlus className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  title="Validar pago"
-                  onClick={() => setValidating(row)}
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-                </Button>
+                {!isClosedRequest(row.status) && (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      title="Extender suscripción"
+                      onClick={() => setExtending(row)}
+                    >
+                      <CalendarPlus className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      title="Validar pago"
+                      onClick={() => setValidating(row)}
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
+                {isAwaitingApproval(row.status) && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    title="Rechazar solicitud"
+                    aria-label={`Rechazar la solicitud de ${row.name}`}
+                    onClick={() => setRejecting(row)}
+                  >
+                    <XCircle className="h-4 w-4 text-[var(--ikk-danger)]" />
+                  </Button>
+                )}
               </>
             )}
           </>
@@ -229,6 +298,10 @@ export default function CompaniesPage() {
           company={viewingMembers}
           onClose={() => setViewingMembers(null)}
         />
+      )}
+
+      {rejecting && (
+        <RejectForm company={rejecting} onClose={() => setRejecting(null)} />
       )}
 
       {editing && (
@@ -384,7 +457,10 @@ function StatusForm({
   company: Company;
   onClose: () => void;
 }) {
-  const [status, setStatus] = useState(company.status);
+  const closed = isClosedRequest(company.status);
+  // Una solicitud cerrada no está entre los estados asignables: se propone
+  // reabrirla como "Por activar".
+  const [status, setStatus] = useState(closed ? "PENDING_ACTIVATION" : company.status);
   const save = useResourceMutation(ENDPOINT, "patch", "Estado actualizado.");
   const target = companyStatus(status);
 
@@ -428,6 +504,86 @@ function StatusForm({
         Pasará de <strong>{companyStatus(company.status).label}</strong> a{" "}
         <strong>{target.label}</strong>.
       </p>
+      {closed && (
+        <p className="mt-2 text-sm text-[var(--ikk-fg-muted)]">
+          La empresa no tiene usuarios. Para que quien la pidió vuelva a verla,
+          agrégalo desde <strong>Usuarios de la empresa</strong>.
+        </p>
+      )}
+    </Modal>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Rechazar solicitud de alta
+// ---------------------------------------------------------------------------
+function RejectForm({
+  company,
+  onClose,
+}: {
+  company: Company;
+  onClose: () => void;
+}) {
+  const [reason, setReason] = useState("");
+  const reject = useResourceMutation(ENDPOINT, "post", "Solicitud rechazada.");
+  const requester = company.requestedBy;
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="Rechazar solicitud"
+      size="sm"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose} disabled={reject.isPending}>
+            Cancelar
+          </Button>
+          <Button
+            variant="danger"
+            onClick={() =>
+              reject.mutate(
+                {
+                  path: `${ENDPOINT}/${company.id}/reject`,
+                  body: { reason: reason.trim() || undefined },
+                },
+                { onSuccess: onClose }
+              )
+            }
+            disabled={reject.isPending || reason.length > REJECT_REASON_MAX}
+          >
+            {reject.isPending ? "Rechazando…" : "Rechazar solicitud"}
+          </Button>
+        </>
+      }
+    >
+      <p className="mb-3 text-2xl font-semibold tracking-tight">{company.name}</p>
+      <div className="space-y-4 text-sm leading-relaxed text-[var(--ikk-fg-muted)]">
+        <p>
+          {requester ? (
+            <>
+              <strong>{fullName(requester)}</strong> ({requester.email}) deja de
+              tener acceso a esta empresa
+            </>
+          ) : (
+            "Quien la pidió deja de tener acceso a esta empresa"
+          )}{" "}
+          y le avisamos por correo. Su cuenta se conserva y puede enviar otra
+          solicitud. La empresa queda aquí como solicitud rechazada.
+        </p>
+        <Field
+          label="Motivo"
+          hint={`Opcional. Se lo mostramos a quien la pidió. ${reason.length}/${REJECT_REASON_MAX}`}
+        >
+          <Textarea
+            value={reason}
+            rows={3}
+            maxLength={REJECT_REASON_MAX}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Por ejemplo: no pudimos verificar los datos del negocio."
+          />
+        </Field>
+      </div>
     </Modal>
   );
 }
