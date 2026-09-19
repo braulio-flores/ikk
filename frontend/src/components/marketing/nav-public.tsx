@@ -1,6 +1,6 @@
 "use client";
 
-// Navegación pública. NO contiene NUNCA enlaces a /login ni a /panel:
+// Navegación pública. NO contiene NUNCA enlaces a la ruta de acceso ni a /panel:
 // es una regla dura del proyecto.
 
 import { useEffect, useState } from "react";

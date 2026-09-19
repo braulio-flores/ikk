@@ -4,6 +4,9 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 const FROM_EMAIL = process.env.EMAIL_FROM;
 const FRONTEND_URL = process.env.FRONTEND_URL;
+// Ruta del frontend donde se fija la nueva contraseña. Debe coincidir con
+// RESET_PATH en frontend/src/lib/routes.ts.
+const RESET_PATH = "/ikk-ops/restablecer";
 const CONTACT_INBOX = process.env.CONTACT_EMAIL_TO;
 
 /** Fecha legible en hora de México para el cuerpo de los correos. */
@@ -28,7 +31,7 @@ export async function sendPasswordResetEmail(
   token: string,
   firstName: string
 ): Promise<void> {
-  const resetUrl = `${FRONTEND_URL}/reset-password?token=${token}`;
+  const resetUrl = `${FRONTEND_URL}${RESET_PATH}?token=${token}`;
 
   const { data, error } = await resend.emails.send({
     from: FROM_EMAIL ?? "IKK Solutions <noreply@ikksolutions.com>",

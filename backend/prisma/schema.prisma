@@ -2,9 +2,15 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// En Neon hay dos cadenas de conexión:
+//   DATABASE_URL → la "pooled" (host con -pooler): la usa la app en runtime.
+//   DIRECT_URL   → la directa: la usan `prisma migrate` y el post-build. Las
+//                  migraciones toman locks de sesión que el pooler no soporta.
+// En local ambas apuntan al mismo Postgres de Docker.
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum OperatorRole {

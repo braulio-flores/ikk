@@ -1,24 +1,31 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import { IkkLogo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { apiPost } from "@/lib/api";
+import { apiErrorMessage } from "@/lib/errors";
+import { ACCESS_PATH } from "@/lib/routes";
 
 export default function ForgotPasswordPage() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setError(null);
     setLoading(true);
     const form = new FormData(e.currentTarget);
     const email = String(form.get("email") ?? "");
     try {
       await apiPost("/auth/forgot-password", { email });
       setSent(true);
+    } catch (err) {
+      setError(apiErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -41,11 +48,23 @@ export default function ForgotPasswordPage() {
       ) : (
         <form onSubmit={onSubmit} className="mt-7 space-y-4">
           <Input type="email" name="email" required placeholder="tu@correo.com" />
+          {error && (
+            <p className="text-sm text-[var(--ikk-danger)]">{error}</p>
+          )}
           <Button type="submit" size="lg" className="w-full" disabled={loading}>
             {loading ? "Enviando…" : "Enviar liga"}
           </Button>
         </form>
       )}
+
+      <div className="mt-5 text-center text-[13px] text-[var(--ikk-fg-muted)]">
+        <Link
+          href={ACCESS_PATH}
+          className="underline-offset-4 hover:text-[var(--ikk-fg)] hover:underline"
+        >
+          Volver a iniciar sesión
+        </Link>
+      </div>
     </Card>
   );
 }

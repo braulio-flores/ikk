@@ -9,6 +9,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { InboxBell } from "@/components/panel/inbox-bell";
 import { useSession } from "@/components/panel/session";
 import { operatorRole } from "@/lib/labels";
+import { ACCESS_PATH } from "@/lib/routes";
 import { IkkMark } from "@/components/logo";
 
 export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
@@ -20,7 +21,7 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
   async function logout() {
     setLeaving(true);
     await apiPost("/auth/logout").catch(() => undefined);
-    router.replace("/login");
+    router.replace(ACCESS_PATH);
   }
 
   return (

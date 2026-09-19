@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { apiPost } from "@/lib/api";
 import { apiErrorMessage } from "@/lib/errors";
+import { ACCESS_PATH } from "@/lib/routes";
 
 // useSearchParams obliga a renderizar del lado del cliente: sin el Suspense la
 // build de producción falla al prerenderizar esta ruta.
@@ -57,7 +58,7 @@ function ResetPasswordForm() {
     try {
       await apiPost("/auth/reset-password", { token, password });
       toast.success("Contraseña actualizada. Ya puedes entrar.");
-      router.replace("/login");
+      router.replace(ACCESS_PATH);
     } catch (err) {
       setError(
         apiErrorMessage(err, "La liga es inválida o ya expiró. Solicita una nueva.")

@@ -7,7 +7,7 @@ Plataforma de doble cara:
 1. **Sitio público corporativo** (`/`) — landing de IKK Solutions, agencia de
    desarrollo de software a medida: servicios, proceso, productos propios
    (Tickomium / Formate / mDoc) y formulario de contacto.
-2. **Panel master privado** (`/login` → `/panel/...`) — desde donde el dueño
+2. **Panel master privado** (`/ikk-ops` → `/panel/...`) — desde donde el dueño
    administra empresas, tenants, clínicas, usuarios, planes y suscripciones de
    los tres productos hijos, además de los prospectos que llegan de la web.
 
@@ -46,8 +46,11 @@ uno con su carpeta `management/` que IKK consume vía service token.
   Layouts independientes, sin cross-links.
 - **404 silencioso para `/panel/*`** cuando no hay sesión. Nunca 401: el panel
   no debe revelar su existencia.
-- `robots.txt` con `Disallow` en `/login`, `/forgot-password`, `/reset-password`
-  y `/panel`; `noindex,nofollow` en `(auth)` y `(panel)`.
+- **Acceso bajo `/ikk-ops`**, no `/login`: los bots que barren internet prueban
+  `/login`, `/admin`, `/manage`… Quita ruido, no es la protección real. Las rutas
+  viven en `frontend/src/lib/routes.ts`.
+- `robots.txt` **no** lista la ruta de acceso ni `/panel` (sería un letrero de
+  "aquí está la entrada"); esas páginas llevan `noindex,nofollow` en su layout.
 - **Cookies con prefijo `ikk_`.** En producción el panel vive en un subdominio de
   `tickomium.com` y la cookie se emite con `COOKIE_DOMAIN=.tickomium.com` para
   que el middleware del frontend pueda verla; con los nombres genéricos
@@ -107,7 +110,7 @@ cd ikk-solutions/frontend && cp .env.example .env && npm install && npm run dev
 ```
 
 Abre `http://localhost:3000` (landing). Para el panel, escribe **directamente**
-`http://localhost:3000/login`.
+`http://localhost:3000/ikk-ops`.
 
 ### 4. Verificación
 

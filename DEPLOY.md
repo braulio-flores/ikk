@@ -36,12 +36,7 @@ También necesitas:
 
 ### Subir el código
 
-El repositorio ya está inicializado con un commit. Crea el repo vacío en
-GitHub (privado) y luego:
-
-```bash
-git -C ~/Developer/react/ikk-solutions remote add origin git@github.com:<usuario>/ikk-solutions.git
-```
+El repositorio vive en `braulio-flores/ikk` y la rama de producción es `main`:
 
 ```bash
 git -C ~/Developer/react/ikk-solutions push -u origin main
@@ -54,14 +49,24 @@ git -C ~/Developer/react/ikk-solutions push -u origin main
 1. Entra a <https://console.neon.tech> → **New project**.
 2. Nombre: `ikk-solutions`. Región: la más cercana a Railway (ej. `US East (Ohio)`).
    Versión de Postgres: 16 o superior.
-3. Al crearlo, Neon muestra la cadena de conexión. Copia la variante
-   **Pooled connection** (contiene `-pooler` en el host). Debe verse así:
+3. Al crearlo, Neon muestra la cadena de conexión con un interruptor
+   **Connection pooling**. Necesitas **las dos** variantes:
 
-   ```
-   postgresql://USUARIO:CONTRASEÑA@ep-xxxx-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require
-   ```
+   - Con pooling **encendido** (el host lleva `-pooler`) → `DATABASE_URL`
 
-4. Guarda esa cadena: es el `DATABASE_URL` de Railway.
+     ```
+     postgresql://USUARIO:CONTRASEÑA@ep-xxxx-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require
+     ```
+
+   - Con pooling **apagado** (mismo host sin `-pooler`) → `DIRECT_URL`
+
+     ```
+     postgresql://USUARIO:CONTRASEÑA@ep-xxxx.us-east-2.aws.neon.tech/neondb?sslmode=require
+     ```
+
+4. Guarda ambas para Railway. La app usa la pooled; las migraciones del
+   post-build usan la directa, porque toman locks de sesión que el pooler no
+   soporta y con la pooled el deploy puede colgarse.
 
 > No hace falta crear tablas a mano. Railway las crea en el primer despliegue
 > (paso 2.4).
@@ -73,7 +78,7 @@ git -C ~/Developer/react/ikk-solutions push -u origin main
 ### 2.1 Crear el servicio
 
 1. <https://railway.app> → **New Project** → **Deploy from GitHub repo** →
-   elige `ikk-solutions`.
+   elige `braulio-flores/ikk`.
 2. Cuando cargue el servicio, entra a **Settings**:
    - **Root Directory**: `backend`
    - **Build**: se detecta solo con `backend/nixpacks.toml`.
@@ -85,7 +90,8 @@ git -C ~/Developer/react/ikk-solutions push -u origin main
 
 | Variable | Valor |
 | -------- | ----- |
-| `DATABASE_URL` | la cadena *pooled* de Neon (paso 1.3) |
+| `DATABASE_URL` | la cadena *pooled* de Neon, con `-pooler` (paso 1.3) |
+| `DIRECT_URL` | la cadena directa de Neon, sin `-pooler` (paso 1.3) |
 | `JWT_ACCESS_SECRET` | el primer `openssl rand -hex 64` |
 | `JWT_REFRESH_SECRET` | el segundo `openssl rand -hex 64` |
 | `ACCESS_TOKEN_EXPIRY` | `2h` |
@@ -147,7 +153,7 @@ operadores se dan de alta desde el panel, en Configuración → Operadores.
 
 ## 3. Vercel (sitio y panel)
 
-1. <https://vercel.com> → **Add New → Project** → importa `ikk-solutions`.
+1. <https://vercel.com> → **Add New → Project** → importa `braulio-flores/ikk`.
 2. **Root Directory**: `frontend`. Framework: Next.js (se detecta solo).
 3. **Environment Variables** (Production y Preview):
 
@@ -192,11 +198,11 @@ Debe responder `{"ok":true,...}`.
 Después, en el navegador:
 
 1. `https://ikk.tickomium.com` → carga la landing. **No** debe haber ningún
-   enlace a `/login` ni a `/panel`.
+   enlace a la ruta de acceso ni a `/panel`.
 2. `https://ikk.tickomium.com/panel/overview` sin sesión → **404**. Si devuelve
-   401 o muestra el panel, algo está mal en el middleware.
+   401 o muestra el panel, algo está mal en `frontend/src/proxy.ts`.
 3. Envía el formulario de contacto. Debe aparecer la pantalla de confirmación.
-4. `https://ikk.tickomium.com/login` → entra con el operador del paso 2.5.
+4. `https://ikk.tickomium.com/ikk-ops` → entra con el operador del paso 2.5.
 5. Ya dentro: Resumen debe mostrar el prospecto que acabas de enviar y las tres
    tarjetas de producto (en línea o sin conexión, según estén desplegados).
 
@@ -224,6 +230,6 @@ Cuando despliegues Tickomium, Formate o mDoc:
 | ------- | -------------- |
 | El login responde 200 pero el panel devuelve 404 | Falta `COOKIE_DOMAIN=.tickomium.com` en Railway, o el proxy de Cloudflare está encendido |
 | `Origen no permitido` en las llamadas del panel | `FRONTEND_URL` en Railway no coincide exactamente con el dominio de Vercel (sin diagonal final) |
-| El build de Railway falla en `prisma migrate deploy` | `DATABASE_URL` mal copiada o sin `?sslmode=require` |
+| El build de Railway falla en `prisma migrate deploy` | Falta `DIRECT_URL`, está mal copiada, o lleva `-pooler` (debe ser la directa); revisa también `?sslmode=require` |
 | Todos los productos aparecen "Sin conexión" | Es lo esperado mientras los hijos no estén desplegados con su `IKK_SERVICE_TOKEN` |
 | No llegan los correos de contacto | Falta `RESEND_API_KEY` o `CONTACT_EMAIL_TO`; el prospecto igual quedó guardado en el panel |

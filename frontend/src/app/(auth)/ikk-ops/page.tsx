@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { apiPost } from "@/lib/api";
+import { FORGOT_PATH } from "@/lib/routes";
 import type { Operator } from "@/lib/types";
 
 export default function LoginPage() {
@@ -85,7 +86,7 @@ export default function LoginPage() {
 
         <div className="text-center text-[13px] text-[var(--ikk-fg-muted)]">
           <Link
-            href="/forgot-password"
+            href={FORGOT_PATH}
             className="hover:text-[var(--ikk-fg)] underline-offset-4 hover:underline"
           >
             ¿Olvidaste tu contraseña?

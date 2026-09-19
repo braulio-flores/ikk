@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { apiGet } from "@/lib/api";
 import type { Operator } from "@/lib/types";
+import { ACCESS_PATH } from "@/lib/routes";
 
 interface SessionValue {
   operator: Operator | null;
@@ -39,7 +40,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   // La cookie ya no vale: fuera del panel. Va en un efecto porque navegar
   // durante el render rompe el árbol de React.
   useEffect(() => {
-    if (isError) router.replace("/login");
+    if (isError) router.replace(ACCESS_PATH);
   }, [isError, router]);
 
   const operator = data?.operator ?? null;

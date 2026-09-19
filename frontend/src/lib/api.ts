@@ -3,7 +3,7 @@
 // Reglas:
 //   - withCredentials: true (cookies HTTP-only del backend).
 //   - Si una request devuelve 401, intentamos UN refresh y reintentamos.
-//   - Si el refresh falla, redirigimos a /login.
+//   - Si el refresh falla, redirigimos a la pantalla de acceso.
 //   - Single-flight: si hay un refresh en curso, las demás requests esperan.
 
 import axios, {
@@ -12,6 +12,7 @@ import axios, {
   AxiosRequestConfig,
   InternalAxiosRequestConfig,
 } from "axios";
+import { ACCESS_PATH } from "./routes";
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4100/ikk";
@@ -64,7 +65,7 @@ api.interceptors.response.use(
         return api.request(original as AxiosRequestConfig);
       } catch {
         if (typeof window !== "undefined") {
-          window.location.href = "/login";
+          window.location.href = ACCESS_PATH;
         }
         return Promise.reject(error);
       }
