@@ -8,11 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Field, Select } from "@/components/ui/field";
+import { Field } from "@/components/ui/field";
 import { useResourceList, useResourceMutation } from "@/hooks/use-resource";
 import { useSession } from "@/components/panel/session";
 import { formatDate } from "@/lib/datetime";
-import { fullName, humanize } from "@/lib/labels";
+import { fullName } from "@/lib/labels";
 
 interface TickomiumUser {
   id: string;
@@ -20,16 +20,10 @@ interface TickomiumUser {
   firstName?: string | null;
   lastName?: string | null;
   phone?: string | null;
-  role?: string | null;
   createdAt?: string;
 }
 
 const ENDPOINT = "/tickomium/users";
-
-const ROLES = [
-  { value: "USER", label: "Usuario" },
-  { value: "ADMIN", label: "Administrador de empresa" },
-];
 
 export default function TickomiumUsersPage() {
   const { canWrite } = useSession();
@@ -52,13 +46,6 @@ export default function TickomiumUsersPage() {
         </div>
       ),
       csv: (row) => `${fullName(row)} <${row.email}>`,
-    },
-    {
-      key: "role",
-      label: "Rol",
-      render: (row) =>
-        ROLES.find((r) => r.value === row.role)?.label ?? humanize(String(row.role ?? "")),
-      csv: (row) => humanize(String(row.role ?? "")),
     },
     {
       key: "phone",
@@ -180,7 +167,6 @@ function UserForm({
     firstName: user?.firstName ?? "",
     lastName: user?.lastName ?? "",
     phone: user?.phone ?? "",
-    role: user?.role ?? "USER",
   });
 
   const missing =
@@ -195,7 +181,6 @@ function UserForm({
       firstName: form.firstName.trim(),
       lastName: form.lastName.trim() || undefined,
       phone: form.phone.trim(),
-      role: form.role,
     };
     if (isNew) {
       body.email = form.email.trim().toLowerCase();
@@ -252,22 +237,16 @@ function UserForm({
             />
           </Field>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Teléfono">
-            <Input
-              value={form.phone}
-              inputMode="tel"
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-            />
-          </Field>
-          <Field label="Rol">
-            <Select
-              value={form.role ?? "USER"}
-              onChange={(e) => setForm({ ...form, role: e.target.value })}
-              options={ROLES}
-            />
-          </Field>
-        </div>
+        <Field
+          label="Teléfono"
+          hint="Lo que la persona puede hacer se define con su rol dentro de cada empresa, desde Tickomium."
+        >
+          <Input
+            value={form.phone}
+            inputMode="tel"
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+          />
+        </Field>
         <Field
           label={isNew ? "Contraseña" : "Nueva contraseña"}
           hint={
