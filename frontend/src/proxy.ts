@@ -1,6 +1,6 @@
-// middleware.ts
+// proxy.ts (antes middleware.ts: la convención cambió en Next 16)
 //
-// Bloquea TODO /panel/* si no hay cookie accessToken.
+// Bloquea TODO /panel/* si no hay cookie de sesión.
 // Devuelve 404 silencioso (no 401) para NO revelar la existencia del panel
 // a curiosos. Esto es una regla dura del proyecto.
 
@@ -10,7 +10,7 @@ import { NextResponse, type NextRequest } from "next/server";
 // panel vive en un subdominio del mismo dominio raíz (ver backend/src/config/cookies.ts).
 const ACCESS_COOKIE = "ikk_access";
 
-export function middleware(request: NextRequest): NextResponse {
+export function proxy(request: NextRequest): NextResponse {
   const accessToken = request.cookies.get(ACCESS_COOKIE)?.value;
 
   if (!accessToken) {
