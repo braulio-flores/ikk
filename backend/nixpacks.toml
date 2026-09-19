@@ -8,8 +8,11 @@
 [phases.setup]
 nixPkgs = ["nodejs_20", "openssl"]
 
+# --include=dev: prisma y typescript son devDependencies y los necesita el
+# build. Con NODE_ENV=production en las variables del servicio, npm las
+# omitiría y `prisma generate` / `tsc` no existirían.
 [phases.install]
-cmds = ["npm ci || npm install"]
+cmds = ["npm ci --include=dev || npm install --include=dev"]
 
 [phases.build]
 cmds = ["npm run build"]
