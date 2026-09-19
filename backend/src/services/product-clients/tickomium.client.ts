@@ -54,11 +54,20 @@ export class TickomiumClient extends BaseProductClient {
     });
   }
 
-  createCompanyUser(id: string, body: unknown): Promise<unknown> {
-    return this.request({
+  /** Suma un usuario existente a la empresa con un rol de la propia empresa. */
+  addCompanyUser(id: string, body: AddCompanyUserBody): Promise<CompanyMember> {
+    return this.request<CompanyMember>({
       method: "POST",
       path: `/management/companies/${id}/users`,
       body,
+    });
+  }
+
+  /** Quita al usuario de la empresa; su cuenta se conserva. */
+  removeCompanyUser(id: string, userId: string): Promise<RemoveCompanyUserResponse> {
+    return this.request<RemoveCompanyUserResponse>({
+      method: "DELETE",
+      path: `/management/companies/${id}/users/${userId}`,
     });
   }
 
@@ -173,6 +182,34 @@ export class TickomiumClient extends BaseProductClient {
       query,
     });
   }
+}
+
+interface MemberUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string | null;
+}
+
+export interface AddCompanyUserBody {
+  userId: string;
+  companyRoleId?: string | null;
+  /** Rol base en la empresa: "ADMIN" (la administra) o "EMPLOYEE". */
+  role?: "ADMIN" | "EMPLOYEE";
+}
+
+export interface CompanyMember {
+  userId: string;
+  companyId: string;
+  role: string;
+  companyRoleId: string | null;
+  user: MemberUser;
+  companyRole: { id: string; name: string } | null;
+}
+
+export interface RemoveCompanyUserResponse {
+  ok: boolean;
+  user: MemberUser;
 }
 
 export interface InboxItem {

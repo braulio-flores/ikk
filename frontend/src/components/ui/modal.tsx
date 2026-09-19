@@ -35,8 +35,17 @@ export function Modal({
   footer,
   size = "md",
 }: ModalProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
+
+  // onClose suele llegar como función nueva en cada render; guardarla en una
+  // ref evita que el efecto se reinicie (y mueva el foco) mientras se teclea.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
 
   useEffect(() => {
     if (!open) return;
@@ -46,15 +55,21 @@ export function Modal({
     document.body.style.overflow = "hidden";
 
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key !== "Escape") return;
+      // Con modales apilados (p. ej. una confirmación encima de otro), Escape
+      // cierra sólo el de arriba: el último portal montado en el body.
+      const dialogs = document.querySelectorAll('[role="dialog"]');
+      if (dialogs[dialogs.length - 1] !== rootRef.current) return;
+      onCloseRef.current();
     }
     document.addEventListener("keydown", onKeyDown);
 
-    // Foco al primer control del formulario.
+    // Foco al primer control del contenido; si no hay, al del encabezado.
     const timer = setTimeout(() => {
-      const focusable = panelRef.current?.querySelector<HTMLElement>(
-        "input, select, textarea, button"
-      );
+      const selector = "input, select, textarea, button";
+      const focusable =
+        bodyRef.current?.querySelector<HTMLElement>(selector) ??
+        panelRef.current?.querySelector<HTMLElement>(selector);
       focusable?.focus();
     }, 30);
 
@@ -64,12 +79,13 @@ export function Modal({
       clearTimeout(timer);
       previouslyFocused.current?.focus?.();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open || typeof document === "undefined") return null;
 
   return createPortal(
     <div
+      ref={rootRef}
       className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
       role="dialog"
       aria-modal="true"
@@ -106,7 +122,9 @@ export function Modal({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
+        <div ref={bodyRef} className="flex-1 overflow-y-auto px-5 py-4">
+          {children}
+        </div>
 
         {footer && (
           <div className="flex flex-col-reverse gap-2 border-t border-[var(--ikk-line-soft)] px-5 py-4 sm:flex-row sm:justify-end">

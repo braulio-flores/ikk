@@ -31,6 +31,15 @@ export function companyStatus(value: unknown): { label: string; tone: BadgeTone 
   return COMPANY_STATUS[key] ?? { label: humanize(key), tone: "neutral" };
 }
 
+/**
+ * Rol base de alguien dentro de una empresa de Tickomium. Lo que puede hacer lo
+ * define su rol de la empresa; el base sólo dice si la administra. OWNER viene
+ * de datos viejos y equivale a administrador.
+ */
+export function isCompanyAdmin(role: unknown): boolean {
+  return role === "ADMIN" || role === "OWNER";
+}
+
 // ---------------------------------------------------------------------------
 // Operadores de IKK
 // ---------------------------------------------------------------------------
@@ -94,6 +103,8 @@ const AUDIT_ACTIONS: Record<string, string> = {
   "company.updateStatus": "Cambio de estado de empresa",
   "company.extendSubscription": "Extensión de suscripción",
   "company.createUser": "Alta de usuario en empresa",
+  "company.addUser": "Usuario agregado a empresa",
+  "company.removeUser": "Usuario retirado de empresa",
   "user.create": "Alta de usuario",
   "user.update": "Edición de usuario",
   "user.delete": "Baja de usuario",

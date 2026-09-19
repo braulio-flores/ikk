@@ -103,24 +103,67 @@ export const extendSubscription = async (
   res.json(data);
 };
 
-export const createCompanyUser = async (
+export const addCompanyUser = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   const id = requireParam(req, "id");
+  const { userId, companyRoleId, role } = req.body as {
+    userId?: string;
+    companyRoleId?: string | null;
+    role?: string;
+  };
+  if (!userId) throw new BadRequestError("Elige a la persona que quieres agregar");
+  if (role !== undefined && role !== "ADMIN" && role !== "EMPLOYEE") {
+    throw new BadRequestError("Tipo de acceso inválido");
+  }
 
-  const data = await tickomiumClient.createCompanyUser(id, req.body);
+  const data = await tickomiumClient.addCompanyUser(id, {
+    userId,
+    companyRoleId: companyRoleId || null,
+    role,
+  });
 
+  // La bitácora del panel muestra los textos, no los identificadores.
   await writeAudit({
     operatorId: req.user?.id,
     product: "TICKOMIUM",
-    action: "company.createUser",
+    action: "company.addUser",
     targetId: id,
-    payload: req.body as Record<string, unknown>,
+    payload: {
+      userId,
+      companyRoleId: data.companyRoleId,
+      user: memberName(data.user),
+      companyRole: data.companyRole?.name ?? "Sin rol",
+    },
   });
 
   res.status(201).json(data);
 };
+
+export const removeCompanyUser = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const id = requireParam(req, "id");
+  const userId = requireParam(req, "userId");
+
+  const data = await tickomiumClient.removeCompanyUser(id, userId);
+
+  await writeAudit({
+    operatorId: req.user?.id,
+    product: "TICKOMIUM",
+    action: "company.removeUser",
+    targetId: id,
+    payload: { userId, user: memberName(data.user) },
+  });
+
+  res.json(data);
+};
+
+function memberName(user: { firstName: string; lastName: string | null; email: string }): string {
+  return [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email;
+}
 
 // =========================================================================
 //   USERS

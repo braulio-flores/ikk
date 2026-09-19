@@ -21,6 +21,14 @@ interface TickomiumUser {
   lastName?: string | null;
   phone?: string | null;
   createdAt?: string;
+  companyUsers?: { company?: { name?: string } | null }[];
+}
+
+function companyNames(user: TickomiumUser): string {
+  const names = (user.companyUsers ?? [])
+    .map((m) => m.company?.name)
+    .filter((n): n is string => Boolean(n));
+  return names.length ? names.join(", ") : "Sin empresa";
 }
 
 const ENDPOINT = "/tickomium/users";
@@ -51,6 +59,14 @@ export default function TickomiumUsersPage() {
       key: "phone",
       label: "Teléfono",
       render: (row) => row.phone ?? "—",
+    },
+    {
+      key: "companies",
+      label: "Empresas",
+      render: (row) => (
+        <span className="text-[13px] text-[var(--ikk-fg-muted)]">{companyNames(row)}</span>
+      ),
+      csv: companyNames,
     },
     {
       key: "createdAt",

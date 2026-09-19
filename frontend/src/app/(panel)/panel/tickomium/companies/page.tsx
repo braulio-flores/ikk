@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarPlus, CheckCircle2, Pencil, Plus, Shuffle } from "lucide-react";
+import { CalendarPlus, CheckCircle2, Pencil, Plus, Shuffle, Users } from "lucide-react";
 import { PageHeader } from "@/components/panel/page-header";
 import { DataTable, type Column } from "@/components/panel/data-table";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,7 @@ import { useResourceList, useResourceMutation } from "@/hooks/use-resource";
 import { useSession } from "@/components/panel/session";
 import { formatDate, formatExpiry } from "@/lib/datetime";
 import { COMPANY_STATUS_OPTIONS, companyStatus } from "@/lib/labels";
+import { CompanyMembers } from "./company-members";
 
 interface Company {
   id: string;
@@ -26,6 +27,13 @@ interface Company {
   plan?: { name?: string } | null;
   planExpiresAt?: string | null;
   createdAt: string;
+  _count?: { companyUsers?: number };
+}
+
+function membersLabel(company: Company): string {
+  const n = company._count?.companyUsers;
+  if (n === undefined) return "Ver usuarios";
+  return n === 1 ? "1 usuario" : `${n} usuarios`;
 }
 
 const ENDPOINT = "/tickomium/companies";
@@ -37,6 +45,7 @@ export default function CompaniesPage() {
   const [changingStatus, setChangingStatus] = useState<Company | null>(null);
   const [extending, setExtending] = useState<Company | null>(null);
   const [validating, setValidating] = useState<Company | null>(null);
+  const [viewingMembers, setViewingMembers] = useState<Company | null>(null);
 
   const list = useResourceList<Company>(ENDPOINT, {
     limit: 25,
@@ -79,6 +88,20 @@ export default function CompaniesPage() {
       label: "Plan",
       render: (row) => row.plan?.name ?? "Sin plan",
       csv: (row) => row.plan?.name ?? "Sin plan",
+    },
+    {
+      key: "members",
+      label: "Usuarios",
+      render: (row) => (
+        <button
+          type="button"
+          onClick={() => setViewingMembers(row)}
+          className="whitespace-nowrap text-[var(--ikk-accent)] underline-offset-2 hover:underline"
+        >
+          {membersLabel(row)}
+        </button>
+      ),
+      csv: (row) => String(row._count?.companyUsers ?? 0),
     },
     {
       key: "createdAt",
@@ -151,45 +174,62 @@ export default function CompaniesPage() {
         total={list.total}
         onPageChange={list.setPage}
         exportName="empresas-tickomium"
-        actions={(row) =>
-          canWrite ? (
-            <>
-              <Button
-                size="sm"
-                variant="ghost"
-                title="Editar datos"
-                onClick={() => setEditing(row)}
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                title="Cambiar estado"
-                onClick={() => setChangingStatus(row)}
-              >
-                <Shuffle className="h-4 w-4" />
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                title="Extender suscripción"
-                onClick={() => setExtending(row)}
-              >
-                <CalendarPlus className="h-4 w-4" />
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                title="Validar pago"
-                onClick={() => setValidating(row)}
-              >
-                <CheckCircle2 className="h-4 w-4" />
-              </Button>
-            </>
-          ) : null
-        }
+        actions={(row) => (
+          <>
+            <Button
+              size="sm"
+              variant="ghost"
+              title="Usuarios de la empresa"
+              onClick={() => setViewingMembers(row)}
+            >
+              <Users className="h-4 w-4" />
+            </Button>
+            {canWrite && (
+              <>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  title="Editar datos"
+                  onClick={() => setEditing(row)}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  title="Cambiar estado"
+                  onClick={() => setChangingStatus(row)}
+                >
+                  <Shuffle className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  title="Extender suscripción"
+                  onClick={() => setExtending(row)}
+                >
+                  <CalendarPlus className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  title="Validar pago"
+                  onClick={() => setValidating(row)}
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+          </>
+        )}
       />
+
+      {viewingMembers && (
+        <CompanyMembers
+          company={viewingMembers}
+          onClose={() => setViewingMembers(null)}
+        />
+      )}
 
       {editing && (
         <CompanyForm
