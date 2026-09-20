@@ -16,6 +16,7 @@ import {
   KeyRound,
   FileText,
   Inbox,
+  ClipboardList,
   ChevronRight,
 } from "lucide-react";
 import { IkkLogo } from "@/components/logo";
@@ -41,6 +42,11 @@ const sections: NavSection[] = [
   {
     label: "Tickomium",
     items: [
+      {
+        href: "/panel/tickomium/requests",
+        label: "Solicitudes",
+        icon: ClipboardList,
+      },
       { href: "/panel/tickomium/companies", label: "Empresas", icon: Building2 },
       { href: "/panel/tickomium/users", label: "Usuarios", icon: Users },
       { href: "/panel/tickomium/plans", label: "Planes", icon: CreditCard },

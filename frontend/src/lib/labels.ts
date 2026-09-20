@@ -43,6 +43,23 @@ export const COMPANY_STATUS_OPTIONS = COMPANY_STATUS_FILTER_OPTIONS.filter(
   ({ value }) => !CLOSED_REQUEST_STATUSES.has(value)
 );
 
+/**
+ * Los mismos conjuntos, ya listos como filtro del listado de empresas
+ * (`?status=A,B`). El backend de Tickomium acepta varios separados por coma.
+ */
+export const AWAITING_APPROVAL_QUERY = [...AWAITING_APPROVAL_STATUSES].join(",");
+export const CLOSED_REQUEST_QUERY = [...CLOSED_REQUEST_STATUSES].join(",");
+
+/** Qué se pidió: el alta normal del punto de venta o sólo una demo. */
+export function companyRequestKind(status: unknown): {
+  label: string;
+  tone: BadgeTone;
+} {
+  return String(status ?? "") === "DEMO_REQUESTED"
+    ? { label: "Demo", tone: "trial" }
+    : { label: "Activación", tone: "active" };
+}
+
 export function isAwaitingApproval(status: unknown): boolean {
   return AWAITING_APPROVAL_STATUSES.has(String(status ?? ""));
 }

@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Field, Select, Textarea } from "@/components/ui/field";
+import { Field, Select } from "@/components/ui/field";
 import { useResourceList, useResourceMutation } from "@/hooks/use-resource";
 import { useSession } from "@/components/panel/session";
 import { formatDate, formatExpiry } from "@/lib/datetime";
@@ -30,6 +30,10 @@ import {
   isClosedRequest,
 } from "@/lib/labels";
 import { CompanyMembers } from "./company-members";
+import {
+  COMPANIES_ENDPOINT,
+  RejectRequestDialog,
+} from "../reject-request";
 
 interface Company {
   id: string;
@@ -50,8 +54,6 @@ interface Company {
   /** Cuándo se rechazó o retiró la solicitud. */
   requestClosedAt?: string | null;
 }
-
-const REJECT_REASON_MAX = 500;
 
 /** Detalle de la solicitud de alta bajo el estado: quién, cuándo y por qué. */
 function requestDetail(company: Company): string | null {
@@ -75,7 +77,7 @@ function membersLabel(company: Company): string {
   return n === 1 ? "1 usuario" : `${n} usuarios`;
 }
 
-const ENDPOINT = "/tickomium/companies";
+const ENDPOINT = COMPANIES_ENDPOINT;
 
 export default function CompaniesPage() {
   const { canWrite } = useSession();
@@ -301,7 +303,10 @@ export default function CompaniesPage() {
       )}
 
       {rejecting && (
-        <RejectForm company={rejecting} onClose={() => setRejecting(null)} />
+        <RejectRequestDialog
+          company={rejecting}
+          onClose={() => setRejecting(null)}
+        />
       )}
 
       {editing && (
@@ -510,80 +515,6 @@ function StatusForm({
           agrégalo desde <strong>Usuarios de la empresa</strong>.
         </p>
       )}
-    </Modal>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Rechazar solicitud de alta
-// ---------------------------------------------------------------------------
-function RejectForm({
-  company,
-  onClose,
-}: {
-  company: Company;
-  onClose: () => void;
-}) {
-  const [reason, setReason] = useState("");
-  const reject = useResourceMutation(ENDPOINT, "post", "Solicitud rechazada.");
-  const requester = company.requestedBy;
-
-  return (
-    <Modal
-      open
-      onClose={onClose}
-      title="Rechazar solicitud"
-      size="sm"
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose} disabled={reject.isPending}>
-            Cancelar
-          </Button>
-          <Button
-            variant="danger"
-            onClick={() =>
-              reject.mutate(
-                {
-                  path: `${ENDPOINT}/${company.id}/reject`,
-                  body: { reason: reason.trim() || undefined },
-                },
-                { onSuccess: onClose }
-              )
-            }
-            disabled={reject.isPending || reason.length > REJECT_REASON_MAX}
-          >
-            {reject.isPending ? "Rechazando…" : "Rechazar solicitud"}
-          </Button>
-        </>
-      }
-    >
-      <p className="mb-3 text-2xl font-semibold tracking-tight">{company.name}</p>
-      <div className="space-y-4 text-sm leading-relaxed text-[var(--ikk-fg-muted)]">
-        <p>
-          {requester ? (
-            <>
-              <strong>{fullName(requester)}</strong> ({requester.email}) deja de
-              tener acceso a esta empresa
-            </>
-          ) : (
-            "Quien la pidió deja de tener acceso a esta empresa"
-          )}{" "}
-          y le avisamos por correo. Su cuenta se conserva y puede enviar otra
-          solicitud. La empresa queda aquí como solicitud rechazada.
-        </p>
-        <Field
-          label="Motivo"
-          hint={`Opcional. Se lo mostramos a quien la pidió. ${reason.length}/${REJECT_REASON_MAX}`}
-        >
-          <Textarea
-            value={reason}
-            rows={3}
-            maxLength={REJECT_REASON_MAX}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="Por ejemplo: no pudimos verificar los datos del negocio."
-          />
-        </Field>
-      </div>
     </Modal>
   );
 }
