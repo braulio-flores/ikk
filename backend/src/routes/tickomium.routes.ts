@@ -9,6 +9,7 @@ import {
   rejectCompanyRequest,
   activateCompanyRequest,
   deleteCompany,
+  repairAdminRole,
   addCompanyUser,
   removeCompanyUser,
   listUsers,
@@ -44,6 +45,8 @@ router.post("/companies/:id/activate", activateCompanyRequest);
 router.post("/companies/:id/users", addCompanyUser);
 router.delete("/companies/:id/users/:userId", removeCompanyUser);
 router.delete("/companies/:id", deleteCompany);
+// TEMPORAL: ver comentario en el controller. Quitar junto con el botón de Empresas.
+router.post("/companies/:id/repair-admin-role", repairAdminRole);
 
 // Users
 router.get("/users", listUsers);

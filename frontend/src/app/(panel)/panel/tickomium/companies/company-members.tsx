@@ -65,6 +65,7 @@ export function CompanyMembers({
   const { canWrite } = useSession();
   const [adding, setAdding] = useState(false);
   const [removing, setRemoving] = useState<Member | null>(null);
+  const [repairing, setRepairing] = useState(false);
 
   const detail = useQuery<CompanyDetail>({
     queryKey: [COMPANIES_ENDPOINT, "detail", company.id],
@@ -77,8 +78,19 @@ export function CompanyMembers({
     "Usuario retirado de la empresa."
   );
 
+  // TEMPORAL: repara administradores que quedaron sin companyRole por un bug
+  // ya corregido en el registro público de Tickomium. Quitar junto con el
+  // botón y el endpoint /repair-admin-role una vez reparadas las empresas
+  // afectadas.
+  const repair = useResourceMutation(
+    COMPANIES_ENDPOINT,
+    "post",
+    "Rol de administrador reparado."
+  );
+
   const members = detail.data?.companyUsers ?? [];
   const adminCount = members.filter((m) => isCompanyAdmin(m.role)).length;
+  const hasBrokenAdmin = members.some((m) => isCompanyAdmin(m.role) && !m.companyRole);
 
   return (
     <>
@@ -100,15 +112,26 @@ export function CompanyMembers({
               ? "cargando"
               : `${members.length} ${members.length === 1 ? "usuario" : "usuarios"}`}
           </span>
-          {canWrite && (
-            <Button
-              size="sm"
-              onClick={() => setAdding(true)}
-              disabled={!detail.data}
-            >
-              <UserPlus className="h-4 w-4" /> Agregar usuario
-            </Button>
-          )}
+          <div className="flex gap-2">
+            {canWrite && hasBrokenAdmin && (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => setRepairing(true)}
+              >
+                Reparar rol de administrador
+              </Button>
+            )}
+            {canWrite && (
+              <Button
+                size="sm"
+                onClick={() => setAdding(true)}
+                disabled={!detail.data}
+              >
+                <UserPlus className="h-4 w-4" /> Agregar usuario
+              </Button>
+            )}
+          </div>
         </div>
 
         {detail.isLoading ? (
@@ -202,6 +225,23 @@ export function CompanyMembers({
           remove.mutate(
             { path: `${COMPANIES_ENDPOINT}/${company.id}/users/${removing.userId}` },
             { onSuccess: () => setRemoving(null) }
+          )
+        }
+      />
+
+      {/* TEMPORAL: ver comentario junto al botón. */}
+      <ConfirmDialog
+        open={repairing}
+        onClose={() => setRepairing(false)}
+        loading={repair.isPending}
+        title="Reparar rol de administrador"
+        highlight={company.name}
+        consequence="Crea (o reutiliza) el rol Administrador de esta empresa con todos los permisos, y se lo asigna a quien administra la empresa pero no tiene rol asignado."
+        confirmLabel="Reparar"
+        onConfirm={() =>
+          repair.mutate(
+            { path: `${COMPANIES_ENDPOINT}/${company.id}/repair-admin-role` },
+            { onSuccess: () => setRepairing(false) }
           )
         }
       />

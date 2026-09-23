@@ -172,6 +172,25 @@ export const deleteCompany = async (
   res.json(data);
 };
 
+/** TEMPORAL: ver comentario en tickomium.client.ts. Quitar junto con el botón. */
+export const repairAdminRole = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const id = requireParam(req, "id");
+  const data = await tickomiumClient.repairAdminRole(id);
+
+  await writeAudit({
+    operatorId: req.user?.id,
+    product: "TICKOMIUM",
+    action: "company.repairAdminRole",
+    targetId: id,
+    payload: { repaired: data.repaired },
+  });
+
+  res.json(data);
+};
+
 export const addCompanyUser = async (
   req: Request,
   res: Response

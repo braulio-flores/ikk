@@ -102,6 +102,18 @@ export class TickomiumClient extends BaseProductClient {
     });
   }
 
+  /**
+   * TEMPORAL: repara empresas que se quedaron con un administrador sin rol
+   * (bug ya corregido en el registro público de Tickomium). Quitar junto con
+   * el botón de IKK una vez reparadas las empresas afectadas.
+   */
+  repairAdminRole(id: string): Promise<{ ok: boolean; repaired: number; message?: string }> {
+    return this.request<{ ok: boolean; repaired: number; message?: string }>({
+      method: "POST",
+      path: `/management/companies/${id}/repair-admin-role`,
+    });
+  }
+
   // -----------------------------------------------------------------------
   //   Users
   // -----------------------------------------------------------------------
