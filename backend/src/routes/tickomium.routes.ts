@@ -7,6 +7,8 @@ import {
   updateCompanyStatus,
   extendSubscription,
   rejectCompanyRequest,
+  activateCompanyRequest,
+  deleteCompany,
   addCompanyUser,
   removeCompanyUser,
   listUsers,
@@ -38,8 +40,10 @@ router.patch("/companies/:id", updateCompany);
 router.patch("/companies/:id/status", updateCompanyStatus);
 router.patch("/companies/:id/extend-subscription", extendSubscription);
 router.post("/companies/:id/reject", rejectCompanyRequest);
+router.post("/companies/:id/activate", activateCompanyRequest);
 router.post("/companies/:id/users", addCompanyUser);
 router.delete("/companies/:id/users/:userId", removeCompanyUser);
+router.delete("/companies/:id", deleteCompany);
 
 // Users
 router.get("/users", listUsers);

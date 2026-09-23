@@ -7,6 +7,7 @@ import {
   Pencil,
   Plus,
   Shuffle,
+  Trash2,
   Users,
   XCircle,
 } from "lucide-react";
@@ -43,7 +44,7 @@ interface Company {
   email?: string | null;
   phone?: string | null;
   status: string;
-  plan?: { name?: string } | null;
+  plan?: { id: string; name?: string } | null;
   planExpiresAt?: string | null;
   createdAt: string;
   _count?: { companyUsers?: number };
@@ -88,6 +89,7 @@ export default function CompaniesPage() {
   const [validating, setValidating] = useState<Company | null>(null);
   const [viewingMembers, setViewingMembers] = useState<Company | null>(null);
   const [rejecting, setRejecting] = useState<Company | null>(null);
+  const [deleting, setDeleting] = useState<Company | null>(null);
 
   const list = useResourceList<Company>(ENDPOINT, {
     limit: 25,
@@ -98,6 +100,12 @@ export default function CompaniesPage() {
     ENDPOINT,
     "post",
     "Pago validado. La empresa quedó activa."
+  );
+
+  const deleteCompany = useResourceMutation(
+    ENDPOINT,
+    "delete",
+    "Empresa eliminada."
   );
 
   const columns: Column<Company>[] = [
@@ -289,6 +297,15 @@ export default function CompaniesPage() {
                     <XCircle className="h-4 w-4 text-[var(--ikk-danger)]" />
                   </Button>
                 )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  title="Eliminar empresa"
+                  aria-label={`Eliminar la empresa ${row.name}`}
+                  onClick={() => setDeleting(row)}
+                >
+                  <Trash2 className="h-4 w-4 text-[var(--ikk-danger)]" />
+                </Button>
               </>
             )}
           </>
@@ -343,6 +360,24 @@ export default function CompaniesPage() {
           )
         }
       />
+
+      <ConfirmDialog
+        open={Boolean(deleting)}
+        onClose={() => setDeleting(null)}
+        loading={deleteCompany.isPending}
+        tone="danger"
+        title="Eliminar empresa"
+        highlight={deleting?.name}
+        consequence="Se borra por completo de Tickomium: no se puede deshacer. Sólo funciona si la empresa no tiene ventas, compras ni otra información registrada — pensado para dar de baja empresas de prueba."
+        confirmLabel="Eliminar empresa"
+        onConfirm={() =>
+          deleting &&
+          deleteCompany.mutate(
+            { path: `${ENDPOINT}/${deleting.id}` },
+            { onSuccess: () => setDeleting(null) }
+          )
+        }
+      />
     </>
   );
 }
@@ -350,6 +385,12 @@ export default function CompaniesPage() {
 // ---------------------------------------------------------------------------
 // Alta / edición
 // ---------------------------------------------------------------------------
+interface Plan {
+  id: string;
+  name: string;
+  isActive: boolean;
+}
+
 function CompanyForm({
   company,
   onClose,
@@ -363,6 +404,7 @@ function CompanyForm({
     isNew ? "post" : "patch",
     isNew ? "Empresa creada." : "Empresa actualizada."
   );
+  const plans = useResourceList<Plan>("/tickomium/plans", { limit: 100 });
 
   const [form, setForm] = useState({
     name: company?.name ?? "",
@@ -370,6 +412,7 @@ function CompanyForm({
     rfc: company?.rfc ?? "",
     email: company?.email ?? "",
     phone: company?.phone ?? "",
+    planId: company?.plan?.id ?? "",
   });
 
   function submit() {
@@ -383,6 +426,10 @@ function CompanyForm({
           rfc: form.rfc.trim().toUpperCase() || undefined,
           email: form.email.trim().toLowerCase() || undefined,
           phone: form.phone.trim() || undefined,
+          // A diferencia de los demás campos, va explícito como null (no
+          // undefined) para poder quitarle el plan a una empresa que ya
+          // tenía uno: el backend sólo toca los campos que llegan definidos.
+          planId: form.planId || null,
         },
       },
       { onSuccess: onClose }
@@ -445,6 +492,20 @@ function CompanyForm({
             type="email"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
+          />
+        </Field>
+        <Field
+          label="Plan"
+          hint="La vigencia se controla aparte, desde Extender suscripción."
+        >
+          <Select
+            value={form.planId}
+            onChange={(e) => setForm({ ...form, planId: e.target.value })}
+            placeholder={plans.isLoading ? "Cargando planes…" : "Sin plan"}
+            options={plans.items.map((p) => ({
+              value: p.id,
+              label: p.isActive ? p.name : `${p.name} (no disponible)`,
+            }))}
           />
         </Field>
       </div>

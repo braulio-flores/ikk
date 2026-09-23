@@ -81,6 +81,17 @@ export default function RequestsPage() {
     "Solicitud aprobada. La empresa quedó activa."
   );
 
+  // Una demo no tiene contraseña: en vez de activarla de un tiro, se le manda
+  // un correo a quien la pidió para que la cree. La empresa queda activa sola
+  // en cuanto lo hace.
+  const activate = useResourceMutation(
+    COMPANIES_ENDPOINT,
+    "post",
+    "Correo de activación enviado."
+  );
+
+  const approvingIsDemo = approving?.status === "DEMO_REQUESTED";
+
   const columns: Column<CompanyRequest>[] = [
     {
       key: "name",
@@ -243,8 +254,12 @@ export default function RequestsPage() {
               <Button
                 size="sm"
                 variant="ghost"
-                title="Aprobar solicitud"
-                aria-label={`Aprobar la solicitud de ${row.name}`}
+                title={row.status === "DEMO_REQUESTED" ? "Activar empresa" : "Aprobar solicitud"}
+                aria-label={
+                  row.status === "DEMO_REQUESTED"
+                    ? `Activar la empresa de ${row.name}`
+                    : `Aprobar la solicitud de ${row.name}`
+                }
                 onClick={() => setApproving(row)}
               >
                 <CheckCircle2 className="h-4 w-4 text-[var(--ikk-success)]" />
@@ -266,37 +281,57 @@ export default function RequestsPage() {
       <ConfirmDialog
         open={!!approving}
         onClose={() => setApproving(null)}
-        onConfirm={() =>
-          approving &&
-          approve.mutate(
-            {
-              path: `${COMPANIES_ENDPOINT}/${approving.id}/status`,
-              body: { status: "ACTIVE" },
-            },
-            { onSuccess: () => setApproving(null) }
-          )
-        }
-        title="Aprobar solicitud"
+        onConfirm={() => {
+          if (!approving) return;
+          if (approvingIsDemo) {
+            activate.mutate(
+              { path: `${COMPANIES_ENDPOINT}/${approving.id}/activate` },
+              { onSuccess: () => setApproving(null) }
+            );
+          } else {
+            approve.mutate(
+              {
+                path: `${COMPANIES_ENDPOINT}/${approving.id}/status`,
+                body: { status: "ACTIVE" },
+              },
+              { onSuccess: () => setApproving(null) }
+            );
+          }
+        }}
+        title={approvingIsDemo ? "Activar empresa" : "Aprobar solicitud"}
         highlight={approving ? companyLabel(approving) : undefined}
         consequence={
-          <>
+          approvingIsDemo ? (
             <p>
-              La empresa queda activa y{" "}
+              Le enviamos un correo a{" "}
               {approving?.requestedBy ? (
                 <strong>{requesterLabel(approving)}</strong>
               ) : (
-                "quien la pidió"
+                "quien pidió la demo"
               )}{" "}
-              puede entrar al punto de venta, al inventario y a la caja.
+              para que cree su contraseña. La empresa queda activa en cuanto la
+              confirme — no hace falta volver a aprobarla.
             </p>
-            <p className="mt-2">
-              Queda sin plan ni vigencia: eso se asigna desde{" "}
-              <strong>Empresas</strong>.
-            </p>
-          </>
+          ) : (
+            <>
+              <p>
+                La empresa queda activa y{" "}
+                {approving?.requestedBy ? (
+                  <strong>{requesterLabel(approving)}</strong>
+                ) : (
+                  "quien la pidió"
+                )}{" "}
+                puede entrar al punto de venta, al inventario y a la caja.
+              </p>
+              <p className="mt-2">
+                Queda sin plan ni vigencia: eso se asigna desde{" "}
+                <strong>Empresas</strong>.
+              </p>
+            </>
+          )
         }
-        confirmLabel="Aprobar solicitud"
-        loading={approve.isPending}
+        confirmLabel={approvingIsDemo ? "Enviar correo de activación" : "Aprobar solicitud"}
+        loading={approvingIsDemo ? activate.isPending : approve.isPending}
       />
 
       {rejecting && (

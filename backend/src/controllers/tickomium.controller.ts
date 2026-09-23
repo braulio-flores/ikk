@@ -136,6 +136,42 @@ export const rejectCompanyRequest = async (
   res.json(data);
 };
 
+export const activateCompanyRequest = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const id = requireParam(req, "id");
+  const data = await tickomiumClient.activateCompanyRequest(id);
+
+  await writeAudit({
+    operatorId: req.user?.id,
+    product: "TICKOMIUM",
+    action: "company.activate",
+    targetId: id,
+    payload: {},
+  });
+
+  res.json(data);
+};
+
+export const deleteCompany = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const id = requireParam(req, "id");
+  const data = await tickomiumClient.deleteCompany(id);
+
+  await writeAudit({
+    operatorId: req.user?.id,
+    product: "TICKOMIUM",
+    action: "company.delete",
+    targetId: id,
+    payload: {},
+  });
+
+  res.json(data);
+};
+
 export const addCompanyUser = async (
   req: Request,
   res: Response

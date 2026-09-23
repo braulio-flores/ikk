@@ -83,6 +83,25 @@ export class TickomiumClient extends BaseProductClient {
     });
   }
 
+  /**
+   * Aprueba una demo: le manda a quien la pidió un correo para crear su
+   * contraseña. La empresa queda en PENDING_EMAIL_VALIDATION hasta que la usa.
+   */
+  activateCompanyRequest(id: string): Promise<unknown> {
+    return this.request({
+      method: "POST",
+      path: `/management/companies/${id}/activate`,
+    });
+  }
+
+  /** Borrado real. Sólo funciona con empresas sin actividad registrada. */
+  deleteCompany(id: string): Promise<{ ok: boolean; id: string }> {
+    return this.request<{ ok: boolean; id: string }>({
+      method: "DELETE",
+      path: `/management/companies/${id}`,
+    });
+  }
+
   // -----------------------------------------------------------------------
   //   Users
   // -----------------------------------------------------------------------
